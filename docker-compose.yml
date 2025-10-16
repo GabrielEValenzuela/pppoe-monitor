@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+  monitor:
+    build: ./monitor
+    container_name: pppoe-monitor
+    restart: unless-stopped
+    environment:
+      - ROUTER_IP=192.168.88.1
+      - ROUTER_USER=admin
+      - ROUTER_PASS=yourpassword
+      - INFLUX_URL=http://influxdb:8086/api/v2/write?org=netmon&bucket=pppoe
+      - INFLUX_TOKEN=your_influx_token
+    volumes:
+      - ./data/logs:/var/log
+    depends_on:
+      - influxdb
+    network_mode: "host"
+
+  influxdb:
+    image: influxdb:2.7
+    container_name: influxdb
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=admin123
+      - DOCKER_INFLUXDB_INIT_ORG=netmon
+      - DOCKER_INFLUXDB_INIT_BUCKET=pppoe
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=your_influx_token
+    volumes:
+      - ./data/influxdb:/var/lib/influxdb2
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data/grafana:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - influxdb
