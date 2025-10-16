@@ -1,0 +1,88 @@
+{
+    "id": null,
+    "uid": "mikrotik-pppoe",
+    "title": "MikroTik PPPoE & Interface Monitor",
+    "timezone": "browser",
+    "schemaVersion": 39,
+    "version": 1,
+    "refresh": "5s",
+    "panels": [
+        {
+            "type": "stat",
+            "title": "Active PPPoE Clients",
+            "gridPos": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 4
+            },
+            "targets": [
+                {
+                    "query": "from(bucket:\"pppoe\") |> range(start:-5m) |> filter(fn: (r) => r._measurement == \"pppoe_clients\") |> last()"
+                }
+            ],
+            "options": {
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
+                "orientation": "horizontal"
+            }
+        },
+        {
+            "type": "timeseries",
+            "title": "Interface RX / TX (bps)",
+            "gridPos": {
+                "x": 0,
+                "y": 4,
+                "w": 12,
+                "h": 8
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "bps"
+                }
+            },
+            "targets": [
+                {
+                    "query": "from(bucket:\"pppoe\") |> range(start:-1h) |> filter(fn: (r) => r._measurement == \"interface_bw\") |> filter(fn: (r) => r._field == \"rx_bps\" or r._field == \"tx_bps\") |> aggregateWindow(every: 5s, fn: mean)"
+                }
+            ]
+        },
+        {
+            "type": "table",
+            "title": "Interfaces Snapshot (Last 5s)",
+            "gridPos": {
+                "x": 12,
+                "y": 0,
+                "w": 12,
+                "h": 12
+            },
+            "targets": [
+                {
+                    "query": "from(bucket:\"pppoe\") |> range(start:-5s) |> filter(fn: (r) => r._measurement == \"interface_bw\") |> last()"
+                }
+            ]
+        },
+        {
+            "type": "timeseries",
+            "title": "Clients Over Time",
+            "gridPos": {
+                "x": 0,
+                "y": 12,
+                "w": 12,
+                "h": 8
+            },
+            "targets": [
+                {
+                    "query": "from(bucket:\"pppoe\") |> range(start:-12h) |> filter(fn: (r) => r._measurement == \"pppoe_clients\") |> aggregateWindow(every: 1m, fn: mean)"
+                }
+            ]
+        }
+    ],
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    }
+}
